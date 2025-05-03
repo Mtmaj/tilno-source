@@ -224,3 +224,29 @@ export interface Element {
   "2": string;
   "3": string;
 }
+
+export interface CategoryDataRes {
+  data: CategoryTechSiro[];
+}
+
+export interface CategoryTechSiro {
+  id: number;
+  title: string;
+  url: string;
+  hasChild: number;
+  position: number;
+  parentCategories?: CategoryTechSiro[];
+  childCategories?: CategoryTechSiro[];
+}
+
+export interface ProductResponse {
+  title: string;
+  short_description?: string;
+  price: number;
+  a_href?: string;
+  type?: string;
+  creator?: string;
+  images: string[];
+  details: string[];
+  information?: Record<string, any>;
+}

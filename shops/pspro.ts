@@ -1,6 +1,94 @@
 import express, { response } from "express";
 import cheerio from "cheerio";
+import { response_sample } from "./temp_response";
 export const pspro = express();
+function categoryListPspro(
+  categoryData: any[],
+  list: { title: string; value: string }[],
+  parentString: string
+) {
+  console.log(categoryData);
+  categoryData.map((category) => {
+    console.log(category.hasChild);
+    if ((category.items ?? []).length > 0) {
+      categoryListPspro(
+        category.items,
+        list,
+        parentString + (parentString != "" ? " < " : "") + category.title
+      );
+    } else {
+      list.push({
+        title: parentString + " < " + category.title,
+        value: category.link.split("/")[category.link.split("/").length - 1],
+      });
+    }
+  });
+  return list;
+}
+pspro.get("/categories", async (req, res) => {
+  try {
+    // دریافت HTML از سایت هدف
+    const html = await fetch("https://pspro.ir").then((response) =>
+      response.text()
+    );
+    const { load } = await import("cheerio");
+    // لود HTML در cheerio
+    const $ = load(html);
+
+    // تابع استخراج منو
+    const extractMenu = () => {
+      const categories: any[] = [];
+
+      $("#main-menu > li.items").each((i, mainLi) => {
+        const category = {
+          title: $(mainLi).find("a").first().text().trim(),
+          link: $(mainLi).find("a").first().attr("href"),
+          items: [],
+        };
+
+        $(mainLi)
+          .find(".sub-menu ul")
+          .each((j, subUl) => {
+            let currentHeader: any = null;
+
+            $(subUl)
+              .find("li")
+              .each((k, subLi) => {
+                if ($(subLi).hasClass("sub-items-header")) {
+                  currentHeader = {
+                    title: $(subLi).find("a").text().trim(),
+                    link: $(subLi).find("a").attr("href"),
+                    items: [],
+                  };
+                  category.items.push(currentHeader as never);
+                } else if ($(subLi).hasClass("sub-items") && currentHeader) {
+                  currentHeader.items.push({
+                    title: $(subLi).find("a").text().trim(),
+                    link: $(subLi).find("a").attr("href"),
+                  });
+                }
+              });
+          });
+
+        categories.push(category);
+      });
+      return categories;
+    };
+    categoryListPspro(extractMenu(), [], "");
+
+    res.json({
+      success: true,
+      data: categoryListPspro(extractMenu(), [], ""),
+    });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({
+      success: false,
+      error: error,
+    });
+  }
+});
+
 pspro.get("/products", async (req, res) => {
   const { query } = req;
   const { category, limit } = query as { category?: string; limit?: number };
@@ -85,13 +173,11 @@ pspro.get("/products", async (req, res) => {
         .each((_, el) => {
           details.push(product_detail(el).text().trim());
         });
-
       let information: Record<string, any> = {};
 
       product_detail("#tab-specification > div")
         .find("span")
         .each((_, el) => {
-          console.log(product_detail(el).hasClass("col-12"));
           if (product_detail(el).hasClass("col-12")) {
             information[product_detail(el).text().trim()] = {} as Record<
               string,
@@ -125,7 +211,11 @@ pspro.get("/products", async (req, res) => {
         a_href: products_list[i].a_href,
         type: type,
         images,
-        details,
+        details: information["مشخصات کلی"]
+          ? Object.entries(information["مشخصات کلی"]).map(
+              ([key, value], i) => key + " : " + value
+            )
+          : details,
         creator,
         information,
       });

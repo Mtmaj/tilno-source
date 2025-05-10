@@ -1,9 +1,11 @@
 import express from "express";
 import { route } from "./route";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 
 const app = express();
 dotenv.config({ path: ".env.development" });
+main().catch((err) => console.log(err));
 
 app.use(express.json());
 app.use("/api", route);
@@ -11,3 +13,9 @@ app.use("/api", route);
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });
+
+async function main() {
+  await mongoose.connect("mongodb://127.0.0.1:27017/tilno_db");
+  console.log("database connect");
+  // use `await mongoose.connect('mongodb://user:password@127.0.0.1:27017/test');` if your database has auth enabled
+}

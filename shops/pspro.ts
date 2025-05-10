@@ -1,15 +1,14 @@
 import express, { response } from "express";
 import cheerio from "cheerio";
 import { response_sample } from "./temp_response";
+import { ProductDB } from "../db/Product";
 export const pspro = express();
 function categoryListPspro(
   categoryData: any[],
   list: { title: string; value: string }[],
   parentString: string
 ) {
-  console.log(categoryData);
   categoryData.map((category) => {
-    console.log(category.hasChild);
     if ((category.items ?? []).length > 0) {
       categoryListPspro(
         category.items,
@@ -219,11 +218,32 @@ pspro.get("/products", async (req, res) => {
         creator,
         information,
       });
-
-      console.log(i + 1);
     }
     res.json(products_res);
   } else {
     res.send({ error: "Invalid query parameters" }).status(400);
   }
+});
+
+pspro.get("/product/:id", async (req, res) => {
+  const { id } = req.params as { id: string };
+
+  const product = await ProductDB.findOne({ product_id: id });
+
+  const text = await fetch(product?.a_href ?? "").then((response) =>
+    response.text()
+  );
+
+  const { load } = await import("cheerio");
+  const $ = load(text);
+
+  const price = parseInt(
+    $("#button-cart")
+      .text()
+      .trim()
+      .replace("تومان", "")
+      .toString()
+      .replace(/,/g, "")
+  );
+  res.json({ price: price });
 });

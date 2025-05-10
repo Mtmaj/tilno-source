@@ -2,11 +2,12 @@ import express, { response } from "express";
 import {
   CategoryTechSiro,
   Daum,
-  Product,
   ProductResponse,
   TechsiroProduct,
 } from "../types";
 import cheerio from "cheerio";
+import { ProductDB } from "../db/Product";
+import { json } from "stream/consumers";
 export const techsiro = express();
 techsiro.get("/products", async (req, res) => {
   const { query } = req;
@@ -24,7 +25,6 @@ techsiro.get("/products", async (req, res) => {
         .then((resp) => resp as TechsiroProduct);
       product_list = [...product_list, ...products_fetch.products.data];
       is_fetch = products_fetch.pagination_data.hasMorePages;
-      console.log(`Fetched page ${page}`);
       page++;
     }
     const { load } = await import("cheerio");
@@ -97,7 +97,8 @@ techsiro.get("/categories", async (req, res) => {
       const match = eval(
         "( " + scriptContent.replace("let navbar = new Vue", "") + " )"
       );
-      console.log(match);
+
+      // console.log(match);
       if (match) {
         // Parse the JSON-like array
         res.json({
@@ -119,14 +120,43 @@ techsiro.get("/categories", async (req, res) => {
   }
 });
 
+techsiro.get("/product/:id", async (req, res) => {
+  const { id } = req.params as { id: string };
+
+  const product = await ProductDB.findOne({ product_id: id });
+
+  const text = await fetch(product?.a_href ?? "").then((response) =>
+    response.text()
+  );
+
+  const { load } = await import("cheerio");
+  const $ = load(text);
+  const scriptContent = $($("script")[1]).text();
+
+  res.json({ price: JSON.parse(scriptContent).offers.price });
+});
+techsiro.post("/set-product", async (req, res) => {
+  console.log("OKKKK");
+  const requestList = req.body as {
+    a_href: string;
+    product_id: number;
+    website: string;
+    category_slug: string;
+  }[];
+
+  const new_product = await ProductDB.insertMany(requestList);
+
+  res.json(new_product);
+});
+
 function categoryListTechSiro(
   categoryData: CategoryTechSiro[],
   list: { title: string; value: string }[],
   parentString: string
 ) {
-  console.log(categoryData);
+  // console.log(categoryData);
   categoryData.map((category) => {
-    console.log(category.hasChild);
+    // console.log(category.hasChild);
     if (category.hasChild > 0) {
       categoryListTechSiro(
         category.parentCategories ?? category.childCategories ?? [],

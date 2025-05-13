@@ -15,7 +15,9 @@ app.listen(3000, () => {
 });
 
 async function main() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/tilno_db");
+  await mongoose.connect(
+    "mongodb://root:v0D4FTRlxABC9KxvwtpR4IQz@eiger.liara.cloud:34897/my-app?authSource=admin"
+  );
   console.log("database connect");
   // use `await mongoose.connect('mongodb://user:password@127.0.0.1:27017/test');` if your database has auth enabled
 }

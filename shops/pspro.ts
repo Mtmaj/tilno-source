@@ -26,7 +26,6 @@ function categoryListPspro(
 }
 pspro.get("/categories", async (req, res) => {
   try {
-    // دریافت HTML از سایت هدف
     const html = await fetch("https://pspro.ir").then((response) =>
       response.text()
     );
@@ -121,7 +120,12 @@ pspro.get("/products", async (req, res) => {
       details: string[];
       information: Record<string, any>;
     }[];
+    const el_list: any[] = [];
     $(".product").each((_, el) => {
+      el_list.push(el);
+    });
+    for (let i = 0; i < el_list.length; i++) {
+      const el = el_list[i];
       const title = $(el).find("h6.font-weight-bold").text().trim();
       const short_description = $(el).find("h6.text-secondary").text().trim();
       const price = parseInt(
@@ -134,10 +138,14 @@ pspro.get("/products", async (req, res) => {
           .replace(/,/g, "")
       );
       const a_href = $(el).find("a").attr("href");
-
-      products_list.push({ title, short_description, price, a_href });
-    });
+      const is_exists = await ProductDB.find({ a_href });
+      if (is_exists.length == 0) {
+        console.log("OK");
+        products_list.push({ title, short_description, price, a_href });
+      }
+    }
     for (let i = 0; i < products_list.length; i++) {
+      console.log(i);
       const response_html = await fetch(`${products_list[i].a_href}`)
         .then(async (response) => {
           return await response.text();

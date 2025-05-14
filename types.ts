@@ -243,6 +243,7 @@ export interface ProductResponse {
   title: string;
   short_description?: string;
   price: number;
+  description: string | null;
   a_href?: string;
   type?: string;
   creator?: string;

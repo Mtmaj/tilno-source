@@ -8,6 +8,7 @@ import {
 import cheerio from "cheerio";
 import { ProductDB } from "../db/Product";
 import { json } from "stream/consumers";
+import { descriptionGenerate } from "./description";
 export const techsiro = express();
 techsiro.get("/products", async (req, res) => {
   const { query } = req;
@@ -27,13 +28,16 @@ techsiro.get("/products", async (req, res) => {
       is_fetch = products_fetch.pagination_data.hasMorePages;
       page++;
     }
+
     const { load } = await import("cheerio");
     for (let i = 0; i < product_list.length; i++) {
+      const description = await descriptionGenerate(product_list[i].title);
       let data_for_push: ProductResponse = {
         images: [],
         title: "",
         price: 0,
         details: [],
+        description: "",
       };
       let product_in_list = product_list[i];
       const page_data_html = await fetch(product_in_list.show_product_url).then(

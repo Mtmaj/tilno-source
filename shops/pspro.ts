@@ -2,6 +2,7 @@ import express, { response } from "express";
 import cheerio from "cheerio";
 import { response_sample } from "./temp_response";
 import { ProductDB } from "../db/Product";
+import { descriptionGenerate } from "./description";
 export const pspro = express();
 function categoryListPspro(
   categoryData: any[],
@@ -26,7 +27,7 @@ function categoryListPspro(
 }
 pspro.get("/categories", async (req, res) => {
   try {
-    const html = await fetch("https://pspro.ir").then((response) =>
+    const html = await fetch("https://pspro.ir", {}).then((response) =>
       response.text()
     );
     const { load } = await import("cheerio");
@@ -116,6 +117,7 @@ pspro.get("/products", async (req, res) => {
       a_href?: string;
       type: string;
       creator: string;
+      description: string | null;
       images: string[];
       details: string[];
       information: Record<string, any>;
@@ -210,10 +212,11 @@ pspro.get("/products", async (req, res) => {
               });
           }
         });
-
+      const description = await descriptionGenerate(products_list[i].title);
       products_res.push({
         title: products_list[i].title,
         short_description: products_list[i].short_description,
+        description: description,
         price: products_list[i].price,
         a_href: products_list[i].a_href,
         type: type,

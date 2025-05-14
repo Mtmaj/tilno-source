@@ -14,6 +14,7 @@ route.post("/product-db", async (req, res) => {
     categories_slug: string;
     website: string;
   };
+  console.log(eval(decodeURI(categories_slug)))
   const products = await ProductDB.find({
     category_slug: eval(decodeURI(categories_slug)),
     website: eval(decodeURI(website)),

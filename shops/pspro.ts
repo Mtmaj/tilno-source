@@ -25,6 +25,7 @@ function categoryListPspro(
   return list;
 }
 pspro.get("/categories", async (req, res) => {
+  console.log("Category is Run")
   try {
     const html = await fetch("https://pspro.ir").then((response) =>
       response.text()

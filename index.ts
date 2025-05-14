@@ -2,10 +2,12 @@ import express from "express";
 import { route } from "./route";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import cors from "cors"
 
 const app = express();
 dotenv.config({ path: ".env.development" });
 main().catch((err) => console.log(err));
+app.use(cors())
 
 app.use(express.json());
 app.use("/api", route);
